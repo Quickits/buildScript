@@ -1,0 +1,74 @@
+import cn.quickits.tools.make.Config
+import cn.quickits.tools.make.DpdInfo
+import cn.quickits.tools.make.DpdManager
+
+apply {
+    plugin "com.android.library"
+
+    plugin "kotlin-android"
+
+    plugin "kotlin-kapt"
+
+    plugin "kotlin-android-extensions"
+}
+
+android {
+    compileSdkVersion Config.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion Config.minSdkVersion
+        targetSdkVersion Config.targetSdkVersion
+        versionCode Config.versionCode
+        versionName Config.versionName
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+}
+
+kapt {
+    arguments {
+        arg("AROUTER_MODULE_NAME", project.path.replaceAll(":", "_"))
+    }
+}
+
+dependencies {
+    api Config.deps.kotlin.dep
+
+    if (project.name.endsWith("_pkg")) {
+        for (Map.Entry<String, DpdInfo> entry : DpdManager.exportDependencies) {
+            api entry.value.dep
+        }
+    } else if (project.name.endsWith("_export")) {
+        api Config.deps.quickits_all.dep
+    }
+
+    for (Map.Entry<String, DpdInfo> entry : DpdManager.testDependencies) {
+        testImplementation entry.value.dep
+    }
+
+    for (Map.Entry<String, DpdInfo> entry : DpdManager.androidTestDependencies) {
+        androidTestImplementation entry.value.dep
+    }
+}
